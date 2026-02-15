@@ -158,7 +158,7 @@ export default function StudioGardenPage() {
   // Hero image load
   useEffect(() => {
     const img = new Image();
-    img.src = "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1920&q=80&fit=crop&auto=format";
+    img.src = "https://images.unsplash.com/photo-1768678146122-2e7be59b0375?w=1920&q=80&fit=crop&auto=format";
     img.onload = () => setHeroLoaded(true);
   }, []);
 
