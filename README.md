@@ -49,4 +49,4 @@ npm start
 
 ## Live Preview
 
-_Coming soon_
+[https://studio-garden.vercel.app](https://studio-garden.vercel.app)
