@@ -217,15 +217,27 @@
 }
 .hero-text { max-width: 560px; }
 .hero-heading {
-  font-size: var(--sg-text-4xl); color: var(--sg-white);
+  font-size: var(--sg-text-4xl); color: #ffffff;
   line-height: var(--leading-tight); letter-spacing: -0.02em;
   margin-bottom: var(--sp-4);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 .hero-sub {
   font-family: var(--font-serif); font-style: italic;
-  font-size: var(--sg-text-lg); color: rgba(255,255,255,0.82);
+  font-size: var(--sg-text-lg); color: #CFE7D6;
   line-height: var(--leading-snug);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.2);
 }
+/* Hero glass button contrast */
+.hero-cta [data-slot="button"] {
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: var(--r-pill);
+}
+.hero-cta [data-slot="button"] > div:nth-child(2) {
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.hero-cta [data-slot="button"]:hover { filter: brightness(1.15); }
 .hero-cta { display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-3); }
 .hero-cta-note { font-size: var(--sg-text-xs); color: rgba(255,255,255,0.6); }
 
