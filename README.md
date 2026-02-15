@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Studio Garden
 
-## Getting Started
+A premium South African garden supply store — built as a design-forward mock e-commerce experience with a liquid-glass UI system.
 
-First, run the development server:
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router, Turbopack)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4 + custom CSS (liquid-glass design system)
+- **UI Components**: shadcn/ui, Radix UI, custom glass components
+- **Fonts**: Geist, Inter, Playfair Display (via next/font)
+
+## Features
+
+- Liquid-glass card and button components
+- Product grid with category filtering and search
+- Cart drawer with quantity controls, clear cart, and checkout flow
+- Hero section with parallax tilt and animated wave overlay
+- Floating cart FAB with contextual visibility
+- Scroll-reveal animations with stagger
+- Fully responsive, reduced-motion safe
+
+## Run Locally
 
 ```bash
+git clone https://github.com/<USERNAME>/studio-garden.git
+cd studio-garden
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Deploy to Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Push to GitHub
+2. Go to [vercel.com/new](https://vercel.com/new)
+3. Import the `studio-garden` repository
+4. Framework preset: **Next.js** (auto-detected)
+5. No environment variables required
+6. Click **Deploy**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Live Preview
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+_Coming soon_

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { LiquidButton } from "@/components/ui/liquid-glass-button";
 import { GlassDefs } from "@/components/ui/glass-defs";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass-card";
+import { Waves } from "@/components/ui/wave-background";
 
 
 /* ===========================
@@ -127,10 +128,25 @@ export default function StudioGardenPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const [canAnimate, setCanAnimate] = useState(false);
+  const [toastProduct, setToastProduct] = useState<string | null>(null);
+  const [clearConfirm, setClearConfirm] = useState(false);
 
   const headerRef = useRef<HTMLElement>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Hero parallax tilt refs
+  const heroRef = useRef<HTMLElement>(null);
+  const heroBgRef = useRef<HTMLDivElement>(null);
+  const accentARef = useRef<HTMLDivElement>(null);
+  const accentBRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
+  const prefersReducedMotion = useRef(false);
+  const isTouchDevice = useRef(false);
+  const shopRef = useRef<HTMLElement>(null);
+  const [isInShop, setIsInShop] = useState(false);
 
   // Scroll effect
   useEffect(() => {
@@ -144,6 +160,37 @@ export default function StudioGardenPage() {
     const img = new Image();
     img.src = "https://images.unsplash.com/photo-1545241047-6083a3684587?w=1920&q=80&fit=crop&auto=format";
     img.onload = () => setHeroLoaded(true);
+  }, []);
+
+  // Hero parallax — detect capabilities + cleanup
+  useEffect(() => {
+    prefersReducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    isTouchDevice.current = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    setCanAnimate(!prefersReducedMotion.current && !isTouchDevice.current);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const handleHeroMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    if (prefersReducedMotion.current || isTouchDevice.current) return;
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      const rect = heroRef.current!.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      if (heroBgRef.current)
+        heroBgRef.current.style.transform = `perspective(1200px) rotateX(${-y * 2}deg) rotateY(${x * 2}deg) translate(${x * 10}px, ${y * 10}px) scale(1.03)`;
+      if (accentARef.current)
+        accentARef.current.style.transform = `translate(${x * 20}px, ${y * 20}px)`;
+      if (accentBRef.current)
+        accentBRef.current.style.transform = `translate(${x * 32}px, ${y * 32}px)`;
+    });
+  }, []);
+
+  const handleHeroMouseLeave = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    if (heroBgRef.current) heroBgRef.current.style.transform = "perspective(1200px) rotateX(0deg) rotateY(0deg) translate(0,0) scale(1.03)";
+    if (accentARef.current) accentARef.current.style.transform = "translate(0,0)";
+    if (accentBRef.current) accentBRef.current.style.transform = "translate(0,0)";
   }, []);
 
   // Intersection observer for reveals
@@ -175,11 +222,61 @@ export default function StudioGardenPage() {
     return () => observer.disconnect();
   }, []);
 
+  // Re-observe product cards after filter changes
+  useEffect(() => {
+    const cards = document.querySelectorAll(".product-card.reveal:not(.visible)");
+    if (cards.length === 0) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      cards.forEach((el) => el.classList.add("visible"));
+      return;
+    }
+
+    cards.forEach((el, i) => {
+      (el as HTMLElement).style.transitionDelay = `${Math.min(i * 60, 300)}ms`;
+    });
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    );
+
+    const timer = setTimeout(() => cards.forEach((el) => observer.observe(el)), 50);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [activeCategory, debouncedSearch]);
+
+  // Shop section visibility for FAB
+  useEffect(() => {
+    if (!shopRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInShop(entry.isIntersecting),
+      { threshold: 0.15 }
+    );
+    observer.observe(shopRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   // Body overflow lock
   useEffect(() => {
     document.body.style.overflow = cartOpen || checkoutOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [cartOpen, checkoutOpen]);
+
+  // Reset clear-cart confirm when drawer closes
+  useEffect(() => {
+    if (!cartOpen) setClearConfirm(false);
+  }, [cartOpen]);
 
   // Escape key
   useEffect(() => {
@@ -200,6 +297,14 @@ export default function StudioGardenPage() {
     searchTimeoutRef.current = setTimeout(() => setDebouncedSearch(val), 250);
   }, []);
 
+  // Toast auto-dismiss
+  useEffect(() => {
+    if (!toastProduct) return;
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastProduct(null), 1600);
+    return () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); };
+  }, [toastProduct]);
+
   // Cart operations
   const addToCart = useCallback((id: number) => {
     const product = PRODUCTS.find((p) => p.id === id);
@@ -212,7 +317,7 @@ export default function StudioGardenPage() {
       }
       return [...prev, { ...product, quantity: 1 }];
     });
-    setCartOpen(true);
+    setToastProduct(product.name);
   }, []);
 
   const updateQuantity = useCallback((id: number, delta: number) => {
@@ -343,14 +448,39 @@ export default function StudioGardenPage() {
       {/* ======= MAIN ======= */}
       <main id="main">
         {/* HERO */}
-        <section className="hero" aria-label="Welcome">
-          <div className="hero-bg" data-loaded={heroLoaded ? "true" : undefined} />
+        <section ref={heroRef} className="hero" aria-label="Welcome" onMouseMove={handleHeroMouseMove} onMouseLeave={handleHeroMouseLeave}>
+          <div ref={heroBgRef} className="hero-bg" data-loaded={heroLoaded ? "true" : undefined} style={{ transition: "transform 300ms cubic-bezier(0.22,1,0.36,1)", willChange: "transform" }} />
           <svg className="hero-leaf" viewBox="0 0 100 300" fill="currentColor" color="rgba(255,255,255,0.9)" aria-hidden="true">
             <path d="M50 0 C20 60, 0 120, 10 180 C15 210, 30 250, 50 300 C70 250, 85 210, 90 180 C100 120, 80 60, 50 0Z" opacity="0.5"/>
             <path d="M50 30 C35 80, 15 130, 25 185 C30 210, 40 245, 50 280" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.3"/>
           </svg>
           <div className="hero-scrim-bl" aria-hidden="true" />
           <div className="hero-scrim-br" aria-hidden="true" />
+          <div ref={accentARef} className="hero-accent hero-accent--a" aria-hidden="true" style={{ transition: "transform 300ms cubic-bezier(0.22,1,0.36,1)", willChange: "transform" }}>
+            <svg viewBox="0 0 120 280" fill="none">
+              <path d="M60 280 C60 220, 35 180, 45 120 C50 80, 75 50, 60 0" stroke="rgba(255,255,255,0.12)" strokeWidth="1.2" />
+              <path d="M45 120 C25 100, 15 70, 35 55" stroke="rgba(255,255,255,0.08)" strokeWidth="0.8" />
+              <path d="M60 160 C80 140, 90 110, 75 90" stroke="rgba(255,255,255,0.08)" strokeWidth="0.8" />
+            </svg>
+          </div>
+          <div ref={accentBRef} className="hero-accent hero-accent--b" aria-hidden="true" style={{ transition: "transform 300ms cubic-bezier(0.22,1,0.36,1)", willChange: "transform" }}>
+            <svg viewBox="0 0 80 160" fill="none">
+              <path d="M40 160 C40 120, 20 90, 30 50 C35 30, 50 15, 40 0" stroke="rgba(255,255,255,0.10)" strokeWidth="1" />
+              <path d="M30 50 C18 38, 12 20, 25 12" stroke="rgba(255,255,255,0.06)" strokeWidth="0.7" />
+            </svg>
+          </div>
+          {canAnimate && (
+            <div className="hero-wave-accent" aria-hidden="true">
+              <Waves
+                className="h-full w-full"
+                foregroundColor="rgba(27,67,50,0.25)"
+                backgroundColor="transparent"
+                speed={0.5}
+                amplitude={0}
+                peakHeight={30}
+              />
+            </div>
+          )}
           <div className="hero-content">
             <div className="hero-text">
               <h1 className="hero-heading">Rooted in<br/>South African Soil</h1>
@@ -380,7 +510,13 @@ export default function StudioGardenPage() {
                   onClick={() => {
                     const next = activeCategory === c.slug ? "all" : c.slug;
                     setActiveCategory(next);
-                    document.getElementById("products")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    requestAnimationFrame(() => {
+                      const el = document.getElementById("products");
+                      if (!el) return;
+                      const headerH = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
+                      const y = el.getBoundingClientRect().top + window.scrollY - headerH - 16;
+                      window.scrollTo({ top: y, behavior: "smooth" });
+                    });
                   }}
                 >
                   <svg className="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -394,14 +530,14 @@ export default function StudioGardenPage() {
         </section>
 
         {/* PRODUCTS */}
-        <section className="sg-section sg-section--alt" aria-labelledby="prod-heading" id="products">
+        <section ref={shopRef} className="sg-section sg-section--alt" aria-labelledby="prod-heading" id="products">
           <div className="sg-container">
             <div className="sg-section-heading-row reveal">
               <h2 id="prod-heading" className="sg-section-heading" style={{ marginBottom: 0 }}>Our Collection</h2>
               {activeCategory !== "all" && (
                 <div className="active-filter-label">
                   <span>Showing: {CATEGORIES.find((c) => c.slug === activeCategory)?.name}</span>
-                  <button className="clear-filter-btn" onClick={() => setActiveCategory("all")}>
+                  <button className="clear-filter-btn" onClick={() => { setActiveCategory("all"); setSearchQuery(""); setDebouncedSearch(""); }}>
                     View all
                   </button>
                 </div>
@@ -558,6 +694,13 @@ export default function StudioGardenPage() {
               <div className="cart-empty">
                 <CartIcon />
                 <p style={{ marginTop: "12px" }}>Your cart is empty</p>
+                <button
+                  className="sg-btn sg-btn--ghost"
+                  style={{ marginTop: "16px" }}
+                  onClick={() => setCartOpen(false)}
+                >
+                  Continue Shopping
+                </button>
               </div>
             ) : (
               <div className="cart-items" role="list">
@@ -590,6 +733,38 @@ export default function StudioGardenPage() {
           </div>
           {cartCount > 0 && (
             <div className="cart-footer-section">
+              <div className="cart-actions">
+                <button
+                  className="sg-btn sg-btn--ghost"
+                  onClick={() => setCartOpen(false)}
+                >
+                  Continue Shopping
+                </button>
+                {!clearConfirm ? (
+                  <button
+                    className="cart-clear-btn"
+                    onClick={() => setClearConfirm(true)}
+                  >
+                    Clear cart
+                  </button>
+                ) : (
+                  <span className="cart-clear-confirm" role="alert">
+                    Clear all items?
+                    <button
+                      className="cart-clear-confirm-btn cancel"
+                      onClick={() => setClearConfirm(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="cart-clear-confirm-btn destructive"
+                      onClick={() => { setCart([]); setClearConfirm(false); }}
+                    >
+                      Clear
+                    </button>
+                  </span>
+                )}
+              </div>
               <div className="cart-delivery-note" aria-live="polite">
                 {fulfilmentMode === "collect"
                   ? "Free collection from our Centurion store"
@@ -686,6 +861,16 @@ export default function StudioGardenPage() {
               >
                 {isSubmitting ? "Processing..." : "Place Order (Simulated)"}
               </LiquidButton>
+              <button
+                type="button"
+                className="checkout-continue"
+                onClick={() => {
+                  closeCheckout();
+                  document.getElementById("products")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              >
+                Continue Shopping
+              </button>
             </form>
           ) : (
             <div className="checkout-success" role="alert">
@@ -699,6 +884,29 @@ export default function StudioGardenPage() {
           )}
         </div>
       </div>
+
+      {/* Add-to-cart toast */}
+      <div
+        className={`cart-toast ${toastProduct ? "show" : ""}`}
+        role="status"
+        aria-live="polite"
+      >
+        Added to cart
+      </div>
+
+      {/* Floating cart button */}
+      <button
+        className={`cart-fab ${isInShop && cartCount > 0 ? "show" : ""}`}
+        aria-label="Open cart"
+        aria-hidden={!(isInShop && cartCount > 0)}
+        tabIndex={isInShop && cartCount > 0 ? 0 : -1}
+        onClick={() => setCartOpen(true)}
+      >
+        <CartIcon />
+        {cartCount > 0 && (
+          <span className="cart-fab-badge" aria-hidden="true">{cartCount}</span>
+        )}
+      </button>
     </div>
   );
 }
