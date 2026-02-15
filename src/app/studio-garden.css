@@ -224,9 +224,9 @@
 }
 .hero-sub {
   font-family: var(--font-serif); font-style: italic;
-  font-size: var(--sg-text-lg); color: #CFE7D6;
+  font-size: var(--sg-text-lg); color: #ffffff;
   line-height: var(--leading-snug);
-  text-shadow: 0 1px 6px rgba(0,0,0,0.2);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 /* Hero glass button contrast */
 .hero-cta [data-slot="button"] {
@@ -239,7 +239,7 @@
 }
 .hero-cta [data-slot="button"]:hover { filter: brightness(1.15); }
 .hero-cta { display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-3); }
-.hero-cta-note { font-size: var(--sg-text-xs); color: rgba(255,255,255,0.6); }
+.hero-cta-note { font-size: var(--sg-text-xs); color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.25); }
 
 /* Hero leaf silhouette accents */
 .hero-accent {
