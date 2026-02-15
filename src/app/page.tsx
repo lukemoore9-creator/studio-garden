@@ -158,7 +158,7 @@ export default function StudioGardenPage() {
   // Hero image load
   useEffect(() => {
     const img = new Image();
-    img.src = "https://images.unsplash.com/photo-1545241047-6083a3684587?w=1920&q=80&fit=crop&auto=format";
+    img.src = "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1920&q=80&fit=crop&auto=format";
     img.onload = () => setHeroLoaded(true);
   }, []);
 
@@ -484,7 +484,7 @@ export default function StudioGardenPage() {
           <div className="hero-content">
             <div className="hero-text">
               <h1 className="hero-heading">Rooted in<br/>South African Soil</h1>
-              <p className="hero-sub">Indigenous plants, premium tools &amp; organic soil<br/>for gardens that belong.</p>
+              <p className="hero-sub">Indigenous plants, premium tools &amp; organic soil<br/>for outdoor spaces that endure.</p>
             </div>
             <div className="hero-cta">
               <a href="#products">
