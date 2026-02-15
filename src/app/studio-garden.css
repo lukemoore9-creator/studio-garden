@@ -217,7 +217,7 @@
 }
 .hero-text { max-width: 560px; }
 .hero-heading {
-  font-size: var(--sg-text-4xl); color: #ffffff;
+  font-size: var(--sg-text-4xl); color: #ffffff !important;
   line-height: var(--leading-tight); letter-spacing: -0.02em;
   margin-bottom: var(--sp-4);
   text-shadow: 0 2px 8px rgba(0,0,0,0.25);
